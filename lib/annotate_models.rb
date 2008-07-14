@@ -47,6 +47,23 @@ module AnnotateModels
       info << sprintf("#  %-#{max_size}.#{max_size}s:%-15.15s %s", col.name, col_type, attrs.join(", ")).rstrip
       info << "\n"
     end
+    if klass.reflections.any? then
+      info << %{#\n}
+      info << %{# Associations:\n}
+      klass.reflections.each do|name,reflection|
+        other = case reflection.macro
+                when :has_many, :has_and_belongs_to_many then 
+                  "#{reflection.macro} [#{reflection.class_name}(#{reflection.primary_key_name})]"
+                when :has_one then
+                  "#{reflection.macro} #{reflection.class_name}(#{reflection.primary_key_name})"
+                when :belongs_to
+                  "#{reflection.macro} #{reflection.class_name} by #{reflection.primary_key_name}"
+                else
+                  raise "Unknown reflection macro: #{reflection.macro}."
+                end
+        info << %{#  self.#{reflection.name} #{other}\n}
+      end 
+    end
 
     info << "#\n\n"
   end
