@@ -54,7 +54,7 @@ module AnnotateModels
     if klass.reflections.any? then
       info << %{#\n}
       info << %{# Associations:\n}
-      klass.reflections.each do|name,reflection|
+      klass.reflections.sort{|a, b| a.first.to_s <=> b.first.to_s}.each do|name, reflection|
         other = case reflection.macro
                 when :has_many, :has_and_belongs_to_many then 
                   sprintf("%-15.15s [%s(%s)]", reflection.macro, reflection.class_name, reflection.primary_key_name)
