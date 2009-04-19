@@ -32,6 +32,10 @@ module AnnotateModels
     info << "# Table name: #{klass.table_name}\n#\n"
     
     max_size = klass.column_names.collect{|name| name.size}.max + 1
+    if klass.reflections.any? then
+        max_reflection_size = klass.reflections.collect{|name, reflection| name.to_s.size}.max + 1
+        max_size = [max_size, max_reflection_size].max
+    end
     klass.columns.each do |col|
       attrs = []
       attrs << "default(#{quote(col.default)})" if col.default
@@ -53,15 +57,15 @@ module AnnotateModels
       klass.reflections.each do|name,reflection|
         other = case reflection.macro
                 when :has_many, :has_and_belongs_to_many then 
-                  "#{reflection.macro} [#{reflection.class_name}(#{reflection.primary_key_name})]"
+                  sprintf("%-15.15s [%s(%s)]", reflection.macro, reflection.class_name, reflection.primary_key_name)
                 when :has_one then
-                  "#{reflection.macro} #{reflection.class_name}(#{reflection.primary_key_name})"
+                  sprintf("%-15.15s %s(%s)", reflection.macro, reflection.class_name, reflection.primary_key_name)
                 when :belongs_to
-                  "#{reflection.macro} #{reflection.class_name} by #{reflection.primary_key_name}"
+                  sprintf("%-15.15s %s\n#%-#{max_size+2}.#{max_size+2}s %-15.15s %s", reflection.macro, reflection.class_name, " ", "by", reflection.primary_key_name)
                 else
                   raise "Unknown reflection macro: #{reflection.macro}."
                 end
-        info << %{#  self.#{reflection.name} #{other}\n}
+        info << sprintf("#  %-#{max_size}.#{max_size}s:%s \n", reflection.name, other);
       end 
     end
 
