@@ -55,17 +55,21 @@ module AnnotateModels
       info << %{#\n}
       info << %{# Associations:\n}
       klass.reflections.sort{|a, b| a.first.to_s <=> b.first.to_s}.each do|name, reflection|
-        other = case reflection.macro
-                when :has_many, :has_and_belongs_to_many then 
-                  sprintf("%-15.15s [%s(%s)]", reflection.macro, reflection.class_name, reflection.primary_key_name)
-                when :has_one then
-                  sprintf("%-15.15s %s(%s)", reflection.macro, reflection.class_name, reflection.primary_key_name)
-                when :belongs_to
-                  sprintf("%-15.15s %s\n#%-#{max_size+2}.#{max_size+2}s %-15.15s %s", reflection.macro, reflection.class_name, " ", "by", reflection.primary_key_name)
-                else
-                  raise "Unknown reflection macro: #{reflection.macro}."
-                end
-        info << sprintf("#  %-#{max_size}.#{max_size}s:%s \n", reflection.name, other);
+        begin
+          other = case reflection.macro
+                  when :has_many, :has_and_belongs_to_many then 
+                    sprintf("%-15.15s [%s(%s)]", reflection.macro, reflection.class_name, reflection.primary_key_name)
+                  when :has_one then
+                    sprintf("%-15.15s %s(%s)", reflection.macro, reflection.class_name, reflection.primary_key_name)
+                  when :belongs_to
+                    sprintf("%-15.15s %s\n#%-#{max_size+2}.#{max_size+2}s %-15.15s %s", reflection.macro, reflection.class_name, " ", "by", reflection.primary_key_name)
+                  else
+                    raise "Unknown reflection macro: #{reflection.macro}."
+                  end
+          info << sprintf("#  %-#{max_size}.#{max_size}s:%s \n", reflection.name, other);
+        rescue Exception => e
+          puts "Skipped #{klass.name}##{reflection.name} because #{e.message}\n#{e.backtrace.join("\n")}"
+        end
       end 
     end
 
@@ -149,7 +153,7 @@ module AnnotateModels
           puts "Skipping #{class_name}"
         end
       rescue Exception => e
-        puts "Unable to annotate #{class_name}: #{e.message}"
+        puts "Unable to annotate #{class_name}: #{e.message}\n#{e.backtrace.join("\n")}"
       end
       
     end
