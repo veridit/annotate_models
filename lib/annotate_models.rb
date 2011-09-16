@@ -58,9 +58,34 @@ module AnnotateModels
         begin
           other = case reflection.macro
                   when :has_many, :has_and_belongs_to_many then 
-                    sprintf("%-15.15s [%s(%s)]", reflection.macro, reflection.class_name, reflection.primary_key_name)
+                    if reflection.through_reflection then
+                      sprintf("%-15.15s %s(%s)\n#%-#{max_size+2}.#{max_size+2}s %-15.15s %s(%s)",
+                              reflection.macro,
+                                reflection.class_name,
+                                reflection.through_reflection.active_record.primary_key,
+                                " ",
+                                "through",
+                                reflection.through_reflection.class_name,
+                                reflection.association_foreign_key)
+                    else
+                      sprintf("%-15.15s [%s(%s)]", reflection.macro, reflection.class_name, reflection.primary_key_name)
+                    end
                   when :has_one then
-                    sprintf("%-15.15s %s(%s)", reflection.macro, reflection.class_name, reflection.primary_key_name)
+                    if reflection.through_reflection then
+                      sprintf("%-15.15s %s(%s)\n#%-#{max_size+2}.#{max_size+2}s %-15.15s %s(%s)",
+                              reflection.macro,
+                                reflection.class_name,
+                                reflection.through_reflection_primary_key,
+                                " ",
+                                "through",
+                                reflection.through_reflection.class_name,
+                                reflection.association_foreign_key)
+                    else
+                      sprintf("%-15.15s %s(%s)",
+                              reflection.macro,
+                              reflection.class_name,
+                              reflection.primary_key_name)
+                    end
                   when :belongs_to
                     sprintf("%-15.15s %s\n#%-#{max_size+2}.#{max_size+2}s %-15.15s %s", reflection.macro, reflection.class_name, " ", "by", reflection.primary_key_name)
                   else
